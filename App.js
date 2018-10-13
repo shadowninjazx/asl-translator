@@ -1,7 +1,12 @@
 import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-// import Camera from 'Camera';
 import {Camera, Permissions} from "expo";
+import {encode} from 'base-64';
+
+
+const accountSid = 'ACef6b964c85c7614c8b2c3029d07a3371';
+const authToken = 'ac032ed39f53f7edb74484eec0d93649';
+const twilio_url = "https://api.twilio.com/2010-04-01/Accounts/" + accountSid + "/Messages";
 
 export default class App extends React.Component {
     constructor(props) {
@@ -42,10 +47,26 @@ class CustomCamera extends React.Component {
     constructor(props) {
         super(props);
 
+        fetch(twilio_url, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + encode(accountSid + ":" + authToken)
+            },
+            body: JSON.stringify({
+                Body: 'Please work',
+                From: '+17342940770',
+                To: '+17348820023',
+                StatusCallback: "http://postb.in/V2jOJIHf"
+            }),
+        });
+
+        console.log("sent");
         setTimeout(() => {
             setInterval(() => {
                 this.snap();
-            }, 1250);
+            }, 1500);
         }, 3000);
     }
 
@@ -56,10 +77,9 @@ class CustomCamera extends React.Component {
 
     async snap() {
         if (this.camera) {
-            // this.camera.resumePreview();
             let photo = this.camera.takePictureAsync({
                 onPictureSaved: this.props.onSnap,
-                // skipProcessing: true
+                skipProcessing: true
             });
         }
     };
