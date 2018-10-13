@@ -18,7 +18,7 @@ export default class App extends React.Component {
                             width: 400,
                             height: 400
                         },
-                        rotate: 90
+                        rotate: -90
                     }]);
                     manipulated.then((img) => {
                         console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
