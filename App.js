@@ -2,11 +2,12 @@ import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Camera, Permissions} from "expo";
 import {encode} from 'base-64';
+import {Buffer} from 'buffer/';
 
 
 const accountSid = 'ACef6b964c85c7614c8b2c3029d07a3371';
 const authToken = 'ac032ed39f53f7edb74484eec0d93649';
-const twilio_url = "https://api.twilio.com/2010-04-01/Accounts/" + accountSid + "/Messages";
+const twilio_url = "https://api.twilio.com/2010-04-01/Accounts/" + accountSid + "/Messages.json";
 
 export default class App extends React.Component {
     constructor(props) {
@@ -23,7 +24,7 @@ export default class App extends React.Component {
                             width: 400,
                             height: 400
                         },
-                        rotate: 90
+                        rotate: -90
                     }]);
                     manipulated.then((img) => {
                         console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
@@ -32,7 +33,7 @@ export default class App extends React.Component {
                 }}/>
                 <View style={styles.textBox}>
                     {/*<Text style={styles.text}>{this.state.text}</Text>*/}
-                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 300}}/>
+                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 300, }}/>
                 </View>
             </View>
         );
@@ -50,10 +51,12 @@ class CustomCamera extends React.Component {
 
         fetch(twilio_url, {
             method: 'POST',
+            withCredentials: true,
+            credentials: 'include',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
-                'Authorization': 'Basic ' + encode(accountSid + ":" + authToken)
+                'Authorization': 'Basic ' + Buffer(accountSid + ":" + authToken).toString('base64')
             },
             body: JSON.stringify({
                 Body: 'Please work',
@@ -61,7 +64,7 @@ class CustomCamera extends React.Component {
                 To: '+17348820023',
                 StatusCallback: "http://postb.in/V2jOJIHf"
             }),
-        });
+        }).then((response) => {console.log(response)});
 
         console.log("sent");
         setTimeout(() => {
