@@ -18,7 +18,7 @@ export default class App extends React.Component {
                             width: 400,
                             height: 400
                         },
-                        rotate: -90
+                        rotate: 90
                     }]);
                     manipulated.then((img) => {
                         console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
@@ -50,7 +50,7 @@ export default class App extends React.Component {
                 }}/>
                 <View style={styles.textBox}>
                     {/*<Text style={styles.text}>{this.state.text}</Text>*/}
-                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 300}}/>
+                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 300, transform: rotate(90)}}/>
                 </View>
             </View>
         );
