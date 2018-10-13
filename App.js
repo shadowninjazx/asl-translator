@@ -1,20 +1,32 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 // import Camera from 'Camera';
 import {Camera, Permissions} from "expo";
 
 export default class App extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {text: "HELLO WORLD"};
+        this.state = {text: "HELLO WORLD", imgUrl: "assets/icon.png"};
     }
 
     render() {
         return (
             <View style={styles.container}>
-                <CustomCamera/>
+                <CustomCamera onSnap={(img) => {
+                    const manipulated = Expo.ImageManipulator.manipulate(img.uri, [{
+                        resize: {
+                            width: 400,
+                            height: 400
+                        }
+                    }]);
+                    manipulated.then((img) => {
+                        console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
+                        this.setState({imgUrl: img.uri});
+                    });
+                }}/>
                 <View style={styles.textBox}>
-                    <Text style={styles.text}>{this.state.text}</Text>
+                    {/*<Text style={styles.text}>{this.state.text}</Text>*/}
+                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 300}}/>
                 </View>
             </View>
         );
@@ -29,9 +41,12 @@ class CustomCamera extends React.Component {
 
     constructor(props) {
         super(props);
-        setInterval(() => {
-            this.snap();
-        }, 500);
+
+        setTimeout(() => {
+            setInterval(() => {
+                this.snap();
+            }, 1250);
+        }, 3000);
     }
 
     async componentWillMount() {
@@ -41,8 +56,10 @@ class CustomCamera extends React.Component {
 
     async snap() {
         if (this.camera) {
+            // this.camera.resumePreview();
             let photo = this.camera.takePictureAsync({
-                onPictureSaved: (img) => console.log("Picture taken at " + img.uri)
+                onPictureSaved: this.props.onSnap,
+                // skipProcessing: true
             });
         }
     };
@@ -61,7 +78,7 @@ class CustomCamera extends React.Component {
                             ref={ref => {
                                 this.camera = ref;
                             }}
-                            ratio="4:3">
+                            pictureSize="2560x1440">
                         <View
                             style={{
                                 flex: 1,
