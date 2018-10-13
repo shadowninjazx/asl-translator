@@ -7,8 +7,8 @@ export default class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {text: "HELLO WORLD", imgUrl: "assets/icon.png"};
-    }
-
+    }   
+    
     render() {
         return (
             <View style={styles.container}>
@@ -23,6 +23,29 @@ export default class App extends React.Component {
                     manipulated.then((img) => {
                         console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
                         this.setState({imgUrl: img.uri});
+                    });
+
+                    // uploading to firebase (download firebase cli before using)
+                    // ImagePicker saves the taken photo to disk and returns a local URI to it
+                    let localUri = img.uri;
+                    let filename = localUri.split('/').pop();
+
+                    // Infer the type of the image
+                    let match = /\.(\w+)$/.exec(filename);
+                    let type = match ? `image/${match[1]}` : `image`;
+
+                    // Upload the image using the fetch and FormData APIs
+                    let formData = new FormData();
+                    // Assume "photo" is the name of the form field the server expects
+                    formData.append('photo', { uri: localUri, name: filename, type });
+
+                    // change server url if it doesn't work
+                    return await fetch(translate-mhacks.appspot.com, {
+                        method: 'POST',
+                        body: formData,
+                        header: {
+                        'content-type': 'multipart/form-data',
+                        },
                     });
                 }}/>
                 <View style={styles.textBox}>
