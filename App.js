@@ -1,20 +1,13 @@
 import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Camera, Permissions} from "expo";
-import {encode} from 'base-64';
-import {Buffer} from 'buffer/';
-
-
-const accountSid = 'ACef6b964c85c7614c8b2c3029d07a3371';
-const authToken = 'ac032ed39f53f7edb74484eec0d93649';
-const twilio_url = "https://api.twilio.com/2010-04-01/Accounts/" + accountSid + "/Messages.json";
 
 export default class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {text: "HELLO WORLD", imgUrl: "assets/icon.png"};
-    }
-
+    }   
+    
     render() {
         return (
             <View style={styles.container}>
@@ -24,16 +17,39 @@ export default class App extends React.Component {
                             width: 400,
                             height: 400
                         },
-                        rotate: -90
+                        // rotate: 90
                     }]);
                     manipulated.then((img) => {
                         console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
                         this.setState({imgUrl: img.uri});
                     });
+
+                    // uploading to firebase (download firebase cli before using)
+                    // ImagePicker saves the taken photo to disk and returns a local URI to it
+                    let localUri = img.uri;
+                    let filename = localUri.split('/').pop();
+
+                    // Infer the type of the image
+                    let match = /\.(\w+)$/.exec(filename);
+                    let type = match ? `image/${match[1]}` : `image`;
+
+                    // Upload the image using the fetch and FormData APIs
+                    let formData = new FormData();
+                    // Assume "photo" is the name of the form field the server expects
+                    formData.append('photo', { uri: localUri, name: filename, type });
+
+                    // change server url if it doesn't work
+                    // return await fetch(translate-mhacks.appspot.com, {
+                    //     method: 'POST',
+                    //     body: formData,
+                    //     header: {
+                    //     'content-type': 'multipart/form-data',
+                    //     },
+                    // });
                 }}/>
                 <View style={styles.textBox}>
                     {/*<Text style={styles.text}>{this.state.text}</Text>*/}
-                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 300, }}/>
+                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 300}}/>
                 </View>
             </View>
         );
@@ -49,24 +65,6 @@ class CustomCamera extends React.Component {
     constructor(props) {
         super(props);
 
-        fetch(twilio_url, {
-            method: 'POST',
-            withCredentials: true,
-            credentials: 'include',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': 'Basic ' + Buffer(accountSid + ":" + authToken).toString('base64')
-            },
-            body: JSON.stringify({
-                Body: 'Please work',
-                From: '+17342940770',
-                To: '+17348820023',
-                StatusCallback: "http://postb.in/V2jOJIHf"
-            }),
-        }).then((response) => {console.log(response)});
-
-        console.log("sent");
         setTimeout(() => {
             setInterval(() => {
                 this.snap();
