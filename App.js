@@ -1,14 +1,42 @@
 import React from 'react';
-import {Button, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Button, Image, ImageStore, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Camera, Permissions} from "expo";
 
-const url = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-1';
+const url1 = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-1';
+const url2 = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-2';
 
 export default class App extends React.Component {
     state = {
-        text: "HELLO WORLD",
+        text: "",
         imgUrl: "assets/icon.png",
     };
+
+    async submitToModel(modelURL, imageURI, success) {
+        ImageStore.getBase64ForTag(imageURI, data => {
+            fetch(modelURL, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    data: data
+                }),
+            }).then(response => response.json()).then(success);
+        }, reason => console.log(reason));
+    }
+
+    async predict(uri) {
+        this.submitToModel(url1, uri, response => {
+            if (response[0].payload[0].displayName === "Hand")
+                this.submitToModel(url2, uri, response => {
+                    this.setState({text: this.state.text + response[0].payload[0].displayName})
+                });
+            else
+                this.setState({text: this.state.text + " "})
+        })
+
+    }
 
     render() {
         return (
@@ -16,36 +44,22 @@ export default class App extends React.Component {
                 <CustomCamera ref={ref => this.customCamera = ref} onSnap={img => {
                     const manipulated = Expo.ImageManipulator.manipulate(img.uri, [{
                         resize: {
-                            width: 400,
+                            width: 500,
                             height: 400
                         },
-                        // rotate: 90
+
+                    }, {
+                        rotate: 90
                     }]);
                     manipulated.then((img) => {
-                        console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
-
-                        // ImageStore.getBase64ForTag(img.uri, data => {
-                        //     fetch(url, {
-                        //         method: 'POST',
-                        //         headers: {
-                        //             Accept: 'application/json',
-                        //             'Content-Type': 'application/json',
-                        //         },
-                        //         body: JSON.stringify({
-                        //             payload: {
-                        //                 image: {
-                        //                     imageBytes: data
-                        //                 }
-                        //             }
-                        //         }),
-                        //     }).then(response => console.log(response));
-                        // }, reason => console.log(reason));
+                        // console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
+                        this.predict(img.uri);
                         this.setState({imgUrl: img.uri});
                     });
                 }}/>
                 <View style={styles.bottomBox}>
-                    {/*<Text style={styles.text}>{this.state.text}</Text>*/}
-                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 250}}/>
+                    <Text style={styles.text}>{this.state.text}</Text>
+                    {/*<Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 250}}/>*/}
                     <StartStopButton startAction={() => {
                         if (this.customCamera) this.customCamera.snap()
                     }}/>
