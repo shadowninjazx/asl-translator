@@ -4,13 +4,14 @@ import {Camera, Permissions} from "expo";
 
 const url1 = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-1';
 const url2 = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-2';
+const twilioURL = 'https://us-central1-kaggle-160323.cloudfunctions.net/function-1';
 
 let currentString = "";
 
 export default class App extends React.Component {
     state = {
         text: "",
-        imgUrl: "assets/icon.png",
+        // imgUrl: "assets/icon.png",
     };
 
     async submitToModel(modelURL, imageURI, success) {
@@ -26,6 +27,19 @@ export default class App extends React.Component {
                 }),
             }).then(response => response.json()).then(success);
         }, reason => console.log(reason));
+    }
+
+    async sendSMS(twilioURL) {
+        fetch(twilioURL, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: this.state.text
+            }),
+        });
     }
 
     isImpossibleDuplicate(c) {
@@ -70,7 +84,7 @@ export default class App extends React.Component {
                     manipulated.then((img) => {
                         // console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
                         this.predict(img.uri);
-                        this.setState({imgUrl: img.uri});
+                        // this.setState({imgUrl: img.uri});
                     });
                 }}/>
                 <View style={styles.bottomBox}>
@@ -80,6 +94,9 @@ export default class App extends React.Component {
                                      startAction={() => {
                                          if (this.customCamera) this.customCamera.snap()
                                      }}/>
+                    <Button title="Send SMS" onPress={() => {
+                        this.sendSMS(twilioURL);
+                    }}/>
                 </View>
             </View>
         );
