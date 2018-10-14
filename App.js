@@ -2,8 +2,7 @@ import React from 'react';
 import {Button, ImageStore, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Camera, Permissions} from "expo";
 
-const url1 = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-1';
-const url2 = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-2';
+const url = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-3';
 const twilioURL = 'https://us-central1-kaggle-160323.cloudfunctions.net/function-1';
 
 let currentString = "";
@@ -48,22 +47,22 @@ export default class App extends React.Component {
     }
 
     async predict(uri) {
-        this.submitToModel(url1, uri, response => {
-            if (response[0] && response[0].payload[0].displayName === "Hand")
-                this.submitToModel(url2, uri, response => {
-                    if (response[0] && response[0].payload[0]) {
-                        let character = response[0].payload[0].displayName;
-                        if (!this.isImpossibleDuplicate(character)) {
-                            this.setState({text: this.state.text + character})
-                            currentString += character;
-                        }
+        this.submitToModel(url, uri, response => {
+            if (response[0] && response[0].payload[0])
+                if (response[0].payload[0].displayName !== "Null") {
+                    let character = response[0].payload[0].displayName;
+                    if (!this.isImpossibleDuplicate(character)) {
+                        this.setState({text: this.state.text + character})
+                        currentString += character;
                     }
-                });
-            else {
-                this.setState({text: this.state.text + " "});
-                Expo.Speech.speak(currentString);
-                currentString = "";
-            }
+                }
+                else {
+                    if (!this.isImpossibleDuplicate(' ')) {
+                        this.setState({text: this.state.text + " "});
+                        Expo.Speech.speak(currentString);
+                        currentString = "";
+                    }
+                }
         })
 
     }
@@ -94,7 +93,7 @@ export default class App extends React.Component {
                                      startAction={() => {
                                          if (this.customCamera) this.customCamera.snap()
                                      }}/>
-                    <Button title="Send SMS" onPress={() => {
+                    <Button title="Send SMS" style={{flex: 1}} onPress={() => {
                         this.sendSMS(twilioURL);
                     }}/>
                 </View>
@@ -120,7 +119,7 @@ class StartStopButton extends React.Component {
                         }
                         if (!this.state.started) {
                             this.props.initAction();
-                            this.intervalID = setInterval(this.props.startAction, 6000);
+                            this.intervalID = setInterval(this.props.startAction, 4000);
                         }
                         this.setState({started: !this.state.started})
                     }}/>
