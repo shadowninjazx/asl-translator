@@ -44,9 +44,9 @@ export default class App extends React.Component {
                     });
                 }}/>
                 <View style={styles.bottomBox}>
-                    {/*<Text style={styles.textBox}>{this.state.text}</Text>*/}
+                    {/*<Text style={styles.text}>{this.state.text}</Text>*/}
                     <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 250}}/>
-                    <StartStopButton style={styles.buttonBox} startAction={() => {
+                    <StartStopButton startAction={() => {
                         if (this.customCamera) this.customCamera.snap()
                     }}/>
                 </View>
@@ -63,12 +63,13 @@ class StartStopButton extends React.Component {
 
     render() {
         return (
-            <Button title={this.state.started ? "Stop" : "Start"} onPress={() => {
-                clearInterval(this.intervalID);
-                if (!this.state.started)
-                    this.intervalID = setInterval(this.props.startAction, 1500)
-                this.setState({started: !this.state.started})
-            }}/>
+            <Button title={this.state.started ? "Stop" : "Start"}
+                    onPress={() => {
+                        clearInterval(this.intervalID);
+                        if (!this.state.started)
+                            this.intervalID = setInterval(this.props.startAction, 1500)
+                        this.setState({started: !this.state.started})
+                    }}/>
         )
     }
 }
@@ -156,15 +157,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
 
-    textBox: {
-        flex: 2
-    },
-
-    buttonBox: {
-        flex: 1,
-    },
-
     text: {
+        flex: 2,
         fontSize: 30,
-    }
+
+    },
 });
