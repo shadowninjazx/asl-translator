@@ -5,12 +5,13 @@ import {Camera, Permissions} from "expo";
 const url1 = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-1';
 const url2 = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-2';
 
+let currentString = "";
+
 export default class App extends React.Component {
     state = {
         text: "",
         imgUrl: "assets/icon.png",
     };
-    currentString = "";
 
     async submitToModel(modelURL, imageURI, success) {
         ImageStore.getBase64ForTag(imageURI, data => {
@@ -27,22 +28,27 @@ export default class App extends React.Component {
         }, reason => console.log(reason));
     }
 
+    isImpossibleDuplicate(c) {
+        if (c !== this.state.text.slice(-1)) return false;
+        else return (c !== 'L' && c !== 'P') || (this.state.text.slice(-1) === this.state.text.slice(-2, -1));
+    }
+
     async predict(uri) {
         this.submitToModel(url1, uri, response => {
-            if (response[0].payload[0].displayName === "Hand")
+            if (response[0] && response[0].payload[0].displayName === "Hand")
                 this.submitToModel(url2, uri, response => {
-                    if (response[0].payload[0]) {
+                    if (response[0] && response[0].payload[0]) {
                         let character = response[0].payload[0].displayName;
-                        if (character !== this.state.text.slice(-1) || character === 'L' || character === 'P') {
+                        if (!this.isImpossibleDuplicate(character)) {
                             this.setState({text: this.state.text + character})
-                            this.currentString += response[0].payload[0].displayName;
+                            currentString += character;
                         }
                     }
                 });
             else {
                 this.setState({text: this.state.text + " "});
-                Expo.Speech.speak(this.currentString);
-                this.currentString = "";
+                Expo.Speech.speak(currentString);
+                currentString = "";
             }
         })
 
@@ -70,9 +76,10 @@ export default class App extends React.Component {
                 <View style={styles.bottomBox}>
                     <Text style={styles.text}>{this.state.text}</Text>
                     {/*<Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 250}}/>*/}
-                    <StartStopButton startAction={() => {
-                        if (this.customCamera) this.customCamera.snap()
-                    }}/>
+                    <StartStopButton initAction={() => this.setState({text: ""})}
+                                     startAction={() => {
+                                         if (this.customCamera) this.customCamera.snap()
+                                     }}/>
                 </View>
             </View>
         );
@@ -89,9 +96,15 @@ class StartStopButton extends React.Component {
         return (
             <Button title={this.state.started ? "Stop" : "Start"}
                     onPress={() => {
-                        clearInterval(this.intervalID);
-                        if (!this.state.started)
-                            this.intervalID = setInterval(this.props.startAction, 3000)
+                        if (this.state.started) {
+                            clearInterval(this.intervalID);
+                            Expo.Speech.speak(currentString);
+                            currentString = "";
+                        }
+                        if (!this.state.started) {
+                            this.props.initAction();
+                            this.intervalID = setInterval(this.props.startAction, 6000);
+                        }
                         this.setState({started: !this.state.started})
                     }}/>
         )
