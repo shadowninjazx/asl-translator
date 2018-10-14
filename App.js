@@ -1,17 +1,19 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View, ImageStore} from 'react-native';
+import {Button, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Camera, Permissions} from "expo";
 
+const url = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-1';
+
 export default class App extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {text: "HELLO WORLD", imgUrl: "assets/icon.png"};
+    state = {
+        text: "HELLO WORLD",
+        imgUrl: "assets/icon.png",
     };
 
     render() {
         return (
             <View style={styles.container}>
-                <CustomCamera onSnap={(img) => {
+                <CustomCamera ref={ref => this.customCamera = ref} onSnap={img => {
                     const manipulated = Expo.ImageManipulator.manipulate(img.uri, [{
                         resize: {
                             width: 400,
@@ -22,18 +24,52 @@ export default class App extends React.Component {
                     manipulated.then((img) => {
                         console.log("Resized " + img.uri + " to size " + img.width + " by " + img.height);
 
-                        ImageStore.getBase64ForTag(img.uri, data => {
-                            console.log("test" + data);
-                        }, reason => console.log(reason));
+                        // ImageStore.getBase64ForTag(img.uri, data => {
+                        //     fetch(url, {
+                        //         method: 'POST',
+                        //         headers: {
+                        //             Accept: 'application/json',
+                        //             'Content-Type': 'application/json',
+                        //         },
+                        //         body: JSON.stringify({
+                        //             payload: {
+                        //                 image: {
+                        //                     imageBytes: data
+                        //                 }
+                        //             }
+                        //         }),
+                        //     }).then(response => console.log(response));
+                        // }, reason => console.log(reason));
                         this.setState({imgUrl: img.uri});
                     });
                 }}/>
-                <View style={styles.textBox}>
-                    {/*<Text style={styles.text}>{this.state.text}</Text>*/}
-                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 300}}/>
+                <View style={styles.bottomBox}>
+                    {/*<Text style={styles.textBox}>{this.state.text}</Text>*/}
+                    <Image source={{uri: this.state.imgUrl}} style={{width: 300, height: 250}}/>
+                    <StartStopButton style={styles.buttonBox} startAction={() => {
+                        if (this.customCamera) this.customCamera.snap()
+                    }}/>
                 </View>
             </View>
         );
+    }
+}
+
+class StartStopButton extends React.Component {
+    state = {
+        started: false,
+    };
+    intervalID = 0;
+
+    render() {
+        return (
+            <Button title={this.state.started ? "Stop" : "Start"} onPress={() => {
+                clearInterval(this.intervalID);
+                if (!this.state.started)
+                    this.intervalID = setInterval(this.props.startAction, 1500)
+                this.setState({started: !this.state.started})
+            }}/>
+        )
     }
 }
 
@@ -42,16 +78,6 @@ class CustomCamera extends React.Component {
         hasCameraPermission: null,
         type: Camera.Constants.Type.back,
     };
-
-    constructor(props) {
-        super(props);
-
-        setTimeout(() => {
-            setInterval(() => {
-                this.snap();
-            }, 1500);
-        }, 3000);
-    }
 
     async componentWillMount() {
         const {status} = await Permissions.askAsync(Permissions.CAMERA);
@@ -123,11 +149,19 @@ const styles = StyleSheet.create({
         flex: 2,
     },
 
-    textBox: {
+    bottomBox: {
         flex: 1,
         backgroundColor: '#ffffff',
         alignItems: 'center',
         justifyContent: 'center',
+    },
+
+    textBox: {
+        flex: 2
+    },
+
+    buttonBox: {
+        flex: 1,
     },
 
     text: {
