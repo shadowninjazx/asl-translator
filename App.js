@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, Image, ImageStore, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Button, ImageStore, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Camera, Permissions} from "expo";
 
 const url1 = 'https://us-central1-kaggle-160323.cloudfunctions.net/asl-translate-1';
@@ -10,6 +10,7 @@ export default class App extends React.Component {
         text: "",
         imgUrl: "assets/icon.png",
     };
+    currentString = "";
 
     async submitToModel(modelURL, imageURI, success) {
         ImageStore.getBase64ForTag(imageURI, data => {
@@ -30,10 +31,19 @@ export default class App extends React.Component {
         this.submitToModel(url1, uri, response => {
             if (response[0].payload[0].displayName === "Hand")
                 this.submitToModel(url2, uri, response => {
-                    this.setState({text: this.state.text + response[0].payload[0].displayName})
+                    if (response[0].payload[0]) {
+                        let character = response[0].payload[0].displayName;
+                        if (character !== this.state.text.slice(-1) || character === 'L' || character === 'P') {
+                            this.setState({text: this.state.text + character})
+                            this.currentString += response[0].payload[0].displayName;
+                        }
+                    }
                 });
-            else
-                this.setState({text: this.state.text + " "})
+            else {
+                this.setState({text: this.state.text + " "});
+                Expo.Speech.speak(this.currentString);
+                this.currentString = "";
+            }
         })
 
     }
@@ -81,7 +91,7 @@ class StartStopButton extends React.Component {
                     onPress={() => {
                         clearInterval(this.intervalID);
                         if (!this.state.started)
-                            this.intervalID = setInterval(this.props.startAction, 1500)
+                            this.intervalID = setInterval(this.props.startAction, 3000)
                         this.setState({started: !this.state.started})
                     }}/>
         )
